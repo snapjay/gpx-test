@@ -1,15 +1,17 @@
 import { ref, onBeforeUnmount } from 'vue'
-import L, { Map, Polyline } from 'leaflet'
+import L from 'leaflet'
 
 const STORAGE_KEY = 'breadcrumbTrail'
 
-export function useBreadcrumbs(map) {
+export function useBreadcrumbs() {
   const tracking = ref(false)
-  const trailCoords = ref<[number, number][]>([])
-  const breadcrumbs = ref<Polyline | null>(null)
-  let watchId: number | null = null
+  const trailCoords = ref([])
+  const breadcrumbs = ref(null)
+  let map = null
+  let watchId = null
 
   function renderTrail() {
+    if (!map) return
     if (!breadcrumbs.value) {
       breadcrumbs.value = L.polyline(trailCoords.value, { color: 'blue', weight: 4 }).addTo(map)
     } else {
@@ -17,10 +19,9 @@ export function useBreadcrumbs(map) {
     }
   }
 
-  function init(myMap: Map) {
-    
-
-   map = myMap
+  function init(myMap) {
+    map = myMap
+    if (!map) return
 
     breadcrumbs.value = L.polyline([], { color: 'blue', weight: 4 }).addTo(map)
 
@@ -44,6 +45,7 @@ export function useBreadcrumbs(map) {
       alert('Geolocation is not supported by your browser')
       return
     }
+    if (!map) return
 
     tracking.value = true
 
@@ -51,7 +53,7 @@ export function useBreadcrumbs(map) {
       (pos) => {
         const lat = pos.coords.latitude
         const lon = pos.coords.longitude
-        const point: [number, number] = [lat, lon]
+        const point = [lat, lon]
 
         trailCoords.value.push(point)
         renderTrail()
@@ -71,7 +73,7 @@ export function useBreadcrumbs(map) {
 
   function clearTrail() {
     trailCoords.value = []
-    breadcrumbs.value?.setLatLngs([])
+    if (breadcrumbs.value) breadcrumbs.value.setLatLngs([])
     localStorage.removeItem(STORAGE_KEY)
   }
 
@@ -79,7 +81,7 @@ export function useBreadcrumbs(map) {
     tracking.value ? stopTracking() : startTracking()
   }
 
-  onBeforeUnmount(() => stopTracking())
+  onBeforeUnmount(stopTracking)
 
   return { tracking, toggleTracking, clearTrail, init, breadcrumbs, trailCoords }
 }
