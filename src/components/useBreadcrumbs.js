@@ -3,7 +3,7 @@ import L, { Map, Polyline } from 'leaflet'
 
 const STORAGE_KEY = 'breadcrumbTrail'
 
-export function useBreadcrumbs(map: Map) {
+export function useBreadcrumbs(map) {
   const tracking = ref(false)
   const trailCoords = ref<[number, number][]>([])
   const breadcrumbs = ref<Polyline | null>(null)
