@@ -17,9 +17,10 @@ export function useBreadcrumbs(map: Map) {
     }
   }
 
-  function init(mapmap: Map) {
+  function init(myMap: Map) {
     
-    if (!map) map = mapmap
+
+   map = myMap
 
     breadcrumbs.value = L.polyline([], { color: 'blue', weight: 4 }).addTo(map)
 

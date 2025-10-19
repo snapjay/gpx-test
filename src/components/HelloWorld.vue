@@ -1,31 +1,30 @@
-<script setup lang="ts">
+<script setup>
 import { onMounted, ref } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import geojsonData from './output-clean1.json'
-import { useBreadcrumbs } from './useBreadcrumbs'
+import { useBreadcrumbs } from './useBreadcrumbs.js'
 
-const typeColors: Record<string, string> = {
+const typeColors = {
   "0x1": "green",
   "0x2": "yellow",
   "0x3": "orange",
   "0x4": "red",
   "0x8": "red"
-};
+}
 
-const mapRef = ref<L.Map | null>(null)
-const { tracking, toggleTracking, clearTrail, init } = useBreadcrumbs(mapRef.value as any)
+const mapRef = ref(null)
+const { tracking, toggleTracking, clearTrail, init } = useBreadcrumbs(mapRef)
 
 const satelliteLayer = L.tileLayer(
   'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  {
-    attribution: ''
-  }
-);
+  { attribution: '' }
+)
 
-const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: ''
-});
+const streetLayer = L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  { attribution: '' }
+)
 
 onMounted(() => {
   const map = L.map('map', {
@@ -34,27 +33,25 @@ onMounted(() => {
     layers: [satelliteLayer]
   })
   mapRef.value = map
-  // Add GeoJSON trails
+
+  // GeoJSON layer
   const geoLayer = L.geoJSON(geojsonData, {
     style: feature => ({
-      color: typeColors[feature.properties.Type] || "#ff0000",
+      color: typeColors[feature.properties.Type] || '#ff0000',
       weight: 3
     }),
     onEachFeature: (feature, layer) => {
       layer.on('click', () => {
         const props = feature.properties
-        let popupContent = '<b>Trail Details:</b><br/>'
-        for (const key in props) {
-          popupContent += `${key}: ${props[key]}<br/>`
-        }
-        layer.bindPopup(popupContent).openPopup()
+        let popup = '<b>Trail Details:</b><br>'
+        for (const key in props) popup += `${key}: ${props[key]}<br>`
+        layer.bindPopup(popup).openPopup()
       })
-
       layer.on('mouseover', () => layer.setStyle({ weight: 5 }))
       layer.on('mouseout', () =>
-        layer.setStyle({ 
-          color: typeColors[feature.properties.Type] || "#ff0000", 
-          weight: 3 
+        layer.setStyle({
+          color: typeColors[feature.properties.Type] || '#ff0000',
+          weight: 3
         })
       )
     }
@@ -62,15 +59,18 @@ onMounted(() => {
 
   map.fitBounds(geoLayer.getBounds())
 
-  // Layer control
-  const baseLayers = { "Street Map": streetLayer, "Satellite": satelliteLayer }
+  // Layer switcher
+  const baseLayers = {
+    'Street Map': streetLayer,
+    'Satellite': satelliteLayer
+  }
   L.control.layers(baseLayers).addTo(map)
 
- 
- init(mapRef.value)
-
+  // Initialize breadcrumb tracking
+  init(map)
 })
 </script>
+
 
 <template>
 
